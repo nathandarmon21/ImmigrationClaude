@@ -276,10 +276,19 @@ async def get_latest_updates(limit: int = 10):
     """
     try:
         updates = await immigration_updates.get_latest_updates(limit=limit)
+
+        # Convert datetime objects to ISO strings for JSON serialization
+        serialized_updates = []
+        for update in updates:
+            serialized_update = update.copy()
+            if 'date' in serialized_update and hasattr(serialized_update['date'], 'isoformat'):
+                serialized_update['date'] = serialized_update['date'].isoformat()
+            serialized_updates.append(serialized_update)
+
         return {
-            "updates": updates,
-            "total": len(updates),
-            "last_updated": updates[0]['date'].isoformat() if updates else None
+            "updates": serialized_updates,
+            "total": len(serialized_updates),
+            "last_updated": serialized_updates[0]['date'] if serialized_updates else None
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to fetch updates: {str(e)}")

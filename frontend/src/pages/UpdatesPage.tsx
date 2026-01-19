@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { ExternalLink, Calendar, ChevronDown, ChevronUp, AlertCircle } from 'lucide-react'
+import api from '../services/api'
 
 interface Update {
   title: string
@@ -14,6 +15,7 @@ interface Update {
 export default function UpdatesPage() {
   const [updates, setUpdates] = useState<Update[]>([])
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
   const [expandedId, setExpandedId] = useState<number | null>(null)
   const [fullTextCache, setFullTextCache] = useState<{[key: number]: any}>({})
 
@@ -23,11 +25,15 @@ export default function UpdatesPage() {
 
   const fetchUpdates = async () => {
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_URL || ''}/updates/latest`)
-      const data = await response.json()
-      setUpdates(data.updates || [])
-    } catch (error) {
+      console.log('Fetching updates from:', api.defaults.baseURL)
+      const response = await api.get('/updates/latest')
+      console.log('Updates response:', response.data)
+      setUpdates(response.data.updates || [])
+      setError(null)
+    } catch (error: any) {
       console.error('Failed to fetch updates:', error)
+      console.error('Error details:', error.response?.data || error.message)
+      setError(error.response?.data?.detail || error.message || 'Failed to load updates')
     } finally {
       setLoading(false)
     }
@@ -39,11 +45,10 @@ export default function UpdatesPage() {
     }
 
     try {
-      const response = await fetch(
-        `${import.meta.env.VITE_API_URL || ''}/updates/details?source_url=${encodeURIComponent(sourceUrl)}`
-      )
-      const data = await response.json()
-      setFullTextCache(prev => ({ ...prev, [updateIndex]: data }))
+      const response = await api.get('/updates/details', {
+        params: { source_url: sourceUrl }
+      })
+      setFullTextCache(prev => ({ ...prev, [updateIndex]: response.data }))
     } catch (error) {
       console.error('Failed to fetch full text:', error)
     }
@@ -111,11 +116,24 @@ export default function UpdatesPage() {
           </div>
         </div>
 
-        {updates.length === 0 ? (
+        {error && (
+          <div className="card bg-red-50 border-red-200 mb-6">
+            <div className="flex items-center text-red-800">
+              <AlertCircle size={20} className="mr-2" />
+              <div>
+                <p className="font-semibold">Error loading updates</p>
+                <p className="text-sm mt-1">{error}</p>
+                <p className="text-sm mt-2">API URL: {api.defaults.baseURL || 'Not configured'}</p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {updates.length === 0 && !error ? (
           <div className="card text-center py-12">
             <p className="text-gray-600">No updates available at this time.</p>
           </div>
-        ) : (
+        ) : !error ? (
           <div className="space-y-4">
             {updates.map((update, index) => (
               <div key={index} className="card hover:shadow-lg transition-shadow">
@@ -188,7 +206,7 @@ export default function UpdatesPage() {
               </div>
             ))}
           </div>
-        )}
+        ) : null}
 
         <div className="mt-8 text-center text-sm text-gray-500">
           <p>Last refreshed: {new Date().toLocaleString()}</p>

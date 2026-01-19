@@ -149,12 +149,18 @@ export default function AssessmentPage() {
   const handleSubmit = async () => {
     setLoading(true)
     try {
+      console.log('Submitting profile:', profile)
+      console.log('API Base URL:', import.meta.env.VITE_API_URL)
       const recommendations = await immigrationApi.analyzeProfile(profile as any)
+      console.log('Recommendations received:', recommendations)
       setRecommendations(recommendations)
       navigate('/results')
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to analyze profile:', error)
-      alert('Failed to analyze your profile. Please try again.')
+      console.error('Error response:', error.response?.data)
+      console.error('Error status:', error.response?.status)
+      const errorMessage = error.response?.data?.detail || error.message || 'Unknown error'
+      alert(`Failed to analyze your profile: ${errorMessage}\n\nCheck browser console for details.`)
     } finally {
       setLoading(false)
     }
