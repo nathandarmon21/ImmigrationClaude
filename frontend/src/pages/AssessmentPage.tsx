@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useUserStore } from '../store/userStore'
 import { immigrationApi } from '../services/api'
@@ -6,9 +6,14 @@ import { ArrowRight, ArrowLeft } from 'lucide-react'
 
 export default function AssessmentPage() {
   const navigate = useNavigate()
-  const { profile, updateProfile, setRecommendations } = useUserStore()
+  const { profile, updateProfile, setRecommendations, resetProfile } = useUserStore()
   const [currentStep, setCurrentStep] = useState(0)
   const [loading, setLoading] = useState(false)
+
+  // Reset profile when component mounts to start fresh each time
+  useEffect(() => {
+    resetProfile()
+  }, [])
 
   const questions = [
     {
