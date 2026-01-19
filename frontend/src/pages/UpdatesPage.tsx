@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react'
-import { immigrationApi } from '../services/api'
 import { ExternalLink, Calendar, ChevronDown, ChevronUp, AlertCircle } from 'lucide-react'
 
 interface Update {
