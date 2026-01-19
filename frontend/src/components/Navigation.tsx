@@ -12,7 +12,7 @@ export default function Navigation() {
         <div className="flex items-center justify-between h-16">
           <Link to="/" className="flex items-center space-x-2">
             <div className="text-2xl font-bold text-primary-600">
-              Immigration Advisory
+              Camille Goes To America!
             </div>
           </Link>
 

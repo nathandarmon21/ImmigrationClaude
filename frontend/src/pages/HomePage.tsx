@@ -10,8 +10,8 @@ export default function HomePage() {
       <section className="container mx-auto px-4 py-20">
         <div className="max-w-4xl mx-auto text-center">
           <h1 className="text-5xl font-bold text-gray-900 mb-6">
-            Your Path to US Immigration
-            <span className="block text-primary-600 mt-2">Made Clear</span>
+            Camille Goes To America!
+            <span className="block text-primary-600 mt-2">Your Personalized Immigration Guide</span>
           </h1>
           <p className="text-xl text-gray-600 mb-8 leading-relaxed">
             Get personalized immigration guidance powered by AI. Understand your options,
