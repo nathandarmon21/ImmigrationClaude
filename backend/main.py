@@ -9,18 +9,18 @@ from typing import List, Optional, Dict, Any
 import os
 from dotenv import load_dotenv
 
-from backend.models.schemas import (
+from models.schemas import (
     UserProfile,
     PathwayRecommendation,
     AdvisoryRequest,
     AdvisoryResponse,
     ConversationMessage,
 )
-from backend.core.analyzer import PathwayAnalyzer
-from backend.services.claude_advisor import ClaudeAdvisor
-from backend.services.data_fetcher import ImmigrationDataFetcher
-from backend.services.web_automation import ImmigrationWebAutomation
-from backend.knowledge.pathways import IMMIGRATION_PATHWAYS, ASSESSMENT_QUESTIONS
+from core.analyzer import PathwayAnalyzer
+from services.claude_advisor import ClaudeAdvisor
+from services.data_fetcher import ImmigrationDataFetcher
+from services.web_automation import ImmigrationWebAutomation
+from knowledge.pathways import IMMIGRATION_PATHWAYS, ASSESSMENT_QUESTIONS
 
 # Load environment variables
 load_dotenv()

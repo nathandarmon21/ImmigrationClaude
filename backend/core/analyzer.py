@@ -3,8 +3,8 @@ Immigration pathway analyzer - scores and recommends pathways based on user prof
 """
 
 from typing import List, Dict, Tuple
-from backend.models.schemas import UserProfile, PathwayRecommendation
-from backend.knowledge.pathways import IMMIGRATION_PATHWAYS, PathwayInfo
+from models.schemas import UserProfile, PathwayRecommendation
+from knowledge.pathways import IMMIGRATION_PATHWAYS, PathwayInfo
 
 
 class PathwayAnalyzer:

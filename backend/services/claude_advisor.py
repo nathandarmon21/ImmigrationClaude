@@ -5,8 +5,8 @@ Claude AI integration for intelligent immigration advisory.
 import os
 from typing import List, Optional
 from anthropic import Anthropic
-from backend.models.schemas import UserProfile, ConversationMessage, PathwayRecommendation
-from backend.knowledge.pathways import IMMIGRATION_PATHWAYS
+from models.schemas import UserProfile, ConversationMessage, PathwayRecommendation
+from knowledge.pathways import IMMIGRATION_PATHWAYS
 
 
 class ClaudeAdvisor:
