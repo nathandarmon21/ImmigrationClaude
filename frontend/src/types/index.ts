@@ -10,6 +10,8 @@ export interface UserProfile {
   employer_will_sponsor: boolean
   country_of_citizenship?: string
   currently_in_us: boolean
+  current_location?: string
+  immigration_story?: string
   additional_info: Record<string, any>
 }
 
