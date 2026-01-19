@@ -24,6 +24,13 @@ export default function AssessmentPage() {
       ],
     },
     {
+      id: 'country_of_citizenship',
+      question: 'What is your country of citizenship?',
+      description: 'This is important because different countries have different visa eligibility, processing times, and potential backlogs.',
+      type: 'text',
+      placeholder: 'e.g., France, Brazil, India, etc.',
+    },
+    {
       id: 'education_level',
       question: 'What is your highest level of education?',
       type: 'radio',
@@ -221,6 +228,21 @@ export default function AssessmentPage() {
               className="input-field"
               placeholder="Enter number of years"
             />
+          )}
+
+          {currentQuestion.type === 'text' && (
+            <div>
+              {currentQuestion.description && (
+                <p className="text-gray-600 mb-4 text-sm">{currentQuestion.description}</p>
+              )}
+              <input
+                type="text"
+                value={(profile as any)[currentQuestion.id] || ''}
+                onChange={(e) => handleAnswer(currentQuestion.id, e.target.value)}
+                className="w-full p-4 border-2 border-gray-200 rounded-lg focus:border-primary-300 focus:outline-none"
+                placeholder={currentQuestion.placeholder}
+              />
+            </div>
           )}
 
           {currentQuestion.type === 'select' && (

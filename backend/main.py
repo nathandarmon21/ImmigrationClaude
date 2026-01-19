@@ -20,6 +20,7 @@ from core.analyzer import PathwayAnalyzer
 from services.claude_advisor import ClaudeAdvisor
 from services.data_fetcher import ImmigrationDataFetcher
 from services.web_automation import ImmigrationWebAutomation
+from services.immigration_updates import ImmigrationUpdatesService
 from knowledge.pathways import IMMIGRATION_PATHWAYS, ASSESSMENT_QUESTIONS
 
 # Load environment variables
@@ -47,6 +48,7 @@ pathway_analyzer = PathwayAnalyzer()
 claude_advisor = ClaudeAdvisor()
 data_fetcher = ImmigrationDataFetcher()
 web_automation = ImmigrationWebAutomation()
+immigration_updates = ImmigrationUpdatesService()
 
 
 # Request/Response models
@@ -263,6 +265,63 @@ async def find_attorney(location: str, specialty: str = "immigration"):
     """Get information about finding immigration attorneys."""
     results = await web_automation.get_attorney_search_results(location, specialty)
     return results
+
+
+@app.get("/updates/latest")
+async def get_latest_updates(limit: int = 10):
+    """
+    Get latest immigration law updates and policy changes.
+
+    Returns recent updates from USCIS, State Department, and Federal Register.
+    """
+    try:
+        updates = await immigration_updates.get_latest_updates(limit=limit)
+        return {
+            "updates": updates,
+            "total": len(updates),
+            "last_updated": updates[0]['date'].isoformat() if updates else None
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to fetch updates: {str(e)}")
+
+
+@app.get("/updates/details")
+async def get_update_details(source_url: str):
+    """
+    Get full legal text and details for a specific update.
+
+    Args:
+        source_url: URL of the update
+    """
+    try:
+        details = await immigration_updates.get_update_details(source_url)
+        if not details:
+            raise HTTPException(status_code=404, detail="Update details not found")
+        return details
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to fetch update details: {str(e)}")
+
+
+@app.get("/updates/search")
+async def search_updates(query: str, category: Optional[str] = None):
+    """
+    Search for immigration updates by keyword.
+
+    Args:
+        query: Search query (e.g., "H-1B", "green card")
+        category: Optional category filter (policy_update, visa_bulletin, executive_order)
+    """
+    try:
+        results = await immigration_updates.search_updates(query, category)
+        return {
+            "results": results,
+            "total": len(results),
+            "query": query
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Search failed: {str(e)}")
 
 
 if __name__ == "__main__":
