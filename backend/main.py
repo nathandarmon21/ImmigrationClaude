@@ -461,9 +461,13 @@ async def find_attorney(location: str, specialty: str = "immigration"):
 
 
 @app.get("/updates/latest")
-async def get_latest_updates(limit: int = 10):
+async def get_latest_updates(limit: int = 10, pathways: Optional[str] = None):
     """
     Get latest immigration law updates and policy changes.
+
+    Args:
+        limit: Maximum number of updates to return (default 10)
+        pathways: Optional comma-separated list of pathway IDs to prioritize (e.g., "h1b,o1,eb2_niw")
 
     Returns recent updates from USCIS, State Department, and Federal Register.
     """
@@ -471,7 +475,12 @@ async def get_latest_updates(limit: int = 10):
         raise HTTPException(status_code=503, detail="Immigration updates service is not available")
 
     try:
-        updates = await immigration_updates.get_latest_updates(limit=limit)
+        # Parse pathway filter if provided
+        pathway_filter = None
+        if pathways:
+            pathway_filter = [p.strip() for p in pathways.split(',')]
+
+        updates = await immigration_updates.get_latest_updates(limit=limit, pathway_filter=pathway_filter)
 
         # Convert datetime objects to ISO strings for JSON serialization
         serialized_updates = []
@@ -484,7 +493,8 @@ async def get_latest_updates(limit: int = 10):
         return {
             "updates": serialized_updates,
             "total": len(serialized_updates),
-            "last_updated": serialized_updates[0]['date'] if serialized_updates else None
+            "last_updated": serialized_updates[0]['date'] if serialized_updates else None,
+            "filtered_by_pathways": pathway_filter
         }
     except Exception as e:
         print(f"Error in get_latest_updates: {str(e)}")

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { ExternalLink, Calendar, ChevronDown, ChevronUp, AlertCircle } from 'lucide-react'
 import api from '../services/api'
+import { useUserStore } from '../store/userStore'
 
 interface Update {
   title: string
@@ -17,16 +18,25 @@ export default function UpdatesPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [expandedId, setExpandedId] = useState<number | null>(null)
-  const [fullTextCache, setFullTextCache] = useState<{[key: number]: any}>({})
+  const { recommendations } = useUserStore()
 
   useEffect(() => {
     fetchUpdates()
-  }, [])
+  }, [recommendations])
 
   const fetchUpdates = async () => {
     try {
-      console.log('Fetching updates from:', api.defaults.baseURL)
-      const response = await api.get('/updates/latest')
+      // Get top 3 pathway IDs from recommendations
+      const pathwayIds = recommendations.slice(0, 3).map(rec => rec.pathway_id)
+
+      // Build query params
+      const params: any = { limit: 10 }
+      if (pathwayIds.length > 0) {
+        params.pathways = pathwayIds.join(',')
+      }
+
+      console.log('Fetching updates with pathways:', pathwayIds)
+      const response = await api.get('/updates/latest', { params })
       console.log('Updates response:', response.data)
       setUpdates(response.data.updates || [])
       setError(null)
@@ -39,28 +49,16 @@ export default function UpdatesPage() {
     }
   }
 
-  const fetchFullText = async (updateIndex: number, sourceUrl: string) => {
-    if (fullTextCache[updateIndex]) {
-      return // Already fetched
-    }
-
-    try {
-      const response = await api.get('/updates/details', {
-        params: { source_url: sourceUrl }
-      })
-      setFullTextCache(prev => ({ ...prev, [updateIndex]: response.data }))
-    } catch (error) {
-      console.error('Failed to fetch full text:', error)
-    }
+  const toggleExpanded = (index: number) => {
+    setExpandedId(expandedId === index ? null : index)
   }
 
-  const toggleExpanded = (index: number, sourceUrl: string) => {
-    if (expandedId === index) {
-      setExpandedId(null)
-    } else {
-      setExpandedId(index)
-      fetchFullText(index, sourceUrl)
-    }
+  const formatFullText = (text: string) => {
+    // Split by sentences and add line breaks for readability
+    return text
+      .replace(/\. /g, '.\n\n')  // Add double line break after periods
+      .replace(/: /g, ':\n')     // Add line break after colons
+      .replace(/\(\d+\)/g, '\n$&')  // Add line break before numbered items like (1), (2)
   }
 
   const getCategoryColor = (category: string) => {
@@ -169,39 +167,36 @@ export default function UpdatesPage() {
                   </div>
                 </div>
 
-                <button
-                  onClick={() => toggleExpanded(index, update.source_url)}
-                  className="mt-4 flex items-center text-primary-600 hover:text-primary-700 font-medium text-sm"
-                >
-                  {expandedId === index ? (
-                    <>
-                      <ChevronUp size={18} className="mr-1" />
-                      Hide Full Details
-                    </>
-                  ) : (
-                    <>
-                      <ChevronDown size={18} className="mr-1" />
-                      Show Full Legal Text
-                    </>
-                  )}
-                </button>
+                {update.full_text && (
+                  <>
+                    <button
+                      onClick={() => toggleExpanded(index)}
+                      className="mt-4 flex items-center text-primary-600 hover:text-primary-700 font-medium text-sm"
+                    >
+                      {expandedId === index ? (
+                        <>
+                          <ChevronUp size={18} className="mr-1" />
+                          Hide Full Details
+                        </>
+                      ) : (
+                        <>
+                          <ChevronDown size={18} className="mr-1" />
+                          Show Full Legal Text
+                        </>
+                      )}
+                    </button>
 
-                {expandedId === index && (
-                  <div className="mt-4 pt-4 border-t border-gray-200">
-                    {fullTextCache[index] ? (
-                      <div className="bg-gray-50 p-4 rounded-lg">
-                        <h4 className="font-semibold mb-2">Full Text:</h4>
-                        <div className="text-sm text-gray-700 whitespace-pre-wrap max-h-96 overflow-y-auto">
-                          {fullTextCache[index].full_text || 'Full text not available. Visit the official source for complete details.'}
+                    {expandedId === index && (
+                      <div className="mt-4 pt-4 border-t border-gray-200">
+                        <div className="bg-gray-50 p-6 rounded-lg">
+                          <h4 className="font-semibold text-gray-900 mb-4 text-base">Full Legal Text:</h4>
+                          <div className="text-sm text-gray-700 leading-relaxed whitespace-pre-line max-h-96 overflow-y-auto">
+                            {formatFullText(update.full_text)}
+                          </div>
                         </div>
                       </div>
-                    ) : (
-                      <div className="flex items-center justify-center py-8">
-                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
-                        <span className="ml-3 text-gray-600">Loading full text...</span>
-                      </div>
                     )}
-                  </div>
+                  </>
                 )}
               </div>
             ))}

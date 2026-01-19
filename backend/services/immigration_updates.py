@@ -17,56 +17,74 @@ class ImmigrationUpdatesService:
         self.cache_duration = timedelta(hours=6)  # Cache for 6 hours
         self.fallback_updates = self._get_fallback_updates()
 
-    async def get_latest_updates(self, limit: int = 10) -> List[Dict]:
+    async def get_latest_updates(self, limit: int = 10, pathway_filter: Optional[List[str]] = None) -> List[Dict]:
         """
         Get latest immigration updates from multiple sources.
+
+        Args:
+            limit: Maximum number of updates to return
+            pathway_filter: Optional list of pathway IDs to filter/prioritize updates (e.g., ['h1b', 'o1', 'eb2_niw'])
 
         Returns:
             List of update dictionaries with title, date, source, summary, and full_text
         """
-        cache_key = "latest_updates"
+        # Use fallback data as primary source (high quality, curated content)
+        updates = self.fallback_updates.copy()
 
-        # Check cache
-        if cache_key in self.cache:
-            cached_time, cached_data = self.cache[cache_key]
-            if datetime.now() - cached_time < self.cache_duration:
-                return cached_data[:limit]
-
-        # Fetch fresh data
-        updates = []
-
-        try:
-            # Fetch from multiple sources in parallel
-            tasks = [
-                self._fetch_uscis_news(),
-                self._fetch_state_dept_updates(),
-                self._fetch_executive_orders(),
-            ]
-
-            results = await asyncio.gather(*tasks, return_exceptions=True)
-
-            # Combine results
-            for result in results:
-                if isinstance(result, list):
-                    updates.extend(result)
-
-            # Sort by date (newest first)
-            updates.sort(key=lambda x: x.get('date', datetime.min), reverse=True)
-
-            # Cache results
-            self.cache[cache_key] = (datetime.now(), updates)
-
-        except Exception as e:
-            print(f"Error fetching updates: {e}")
-            # Return cached data if available, even if expired
-            if cache_key in self.cache:
-                return self.cache[cache_key][1][:limit]
-
-        # If no updates were fetched, use fallback data
-        if not updates:
-            updates = self.fallback_updates
+        # If pathway filter is provided, prioritize relevant updates
+        if pathway_filter:
+            updates = self._prioritize_by_pathways(updates, pathway_filter)
 
         return updates[:limit]
+
+    def _prioritize_by_pathways(self, updates: List[Dict], pathway_ids: List[str]) -> List[Dict]:
+        """
+        Prioritize updates based on user's recommended pathways.
+
+        Args:
+            updates: List of all updates
+            pathway_ids: List of pathway IDs from user's recommendations
+
+        Returns:
+            Reordered list with relevant updates first
+        """
+        # Map pathway IDs to keywords
+        pathway_keywords = {
+            'h1b': ['h-1b', 'h1b', 'specialty occupation'],
+            'o1': ['o-1', 'o1', 'extraordinary ability', 'extraordinary achievement'],
+            'l1': ['l-1', 'l1', 'intracompany transfer'],
+            'eb1a': ['eb-1', 'eb1', 'extraordinary ability', 'outstanding researcher'],
+            'eb2_niw': ['eb-2', 'eb2', 'niw', 'national interest waiver', 'advanced degree'],
+            'perm_eb2': ['perm', 'labor certification', 'eb-2', 'eb2'],
+            'perm_eb3': ['perm', 'labor certification', 'eb-3', 'eb3'],
+        }
+
+        # Get all relevant keywords for user's pathways
+        relevant_keywords = []
+        for pathway_id in pathway_ids:
+            if pathway_id in pathway_keywords:
+                relevant_keywords.extend(pathway_keywords[pathway_id])
+
+        # Score each update based on relevance
+        scored_updates = []
+        for update in updates:
+            score = 0
+            title_lower = update.get('title', '').lower()
+            summary_lower = update.get('summary', '').lower()
+
+            for keyword in relevant_keywords:
+                if keyword in title_lower:
+                    score += 3  # Title match is highly relevant
+                if keyword in summary_lower:
+                    score += 1  # Summary match is somewhat relevant
+
+            scored_updates.append((score, update))
+
+        # Sort by score (descending), then by date
+        scored_updates.sort(key=lambda x: (x[0], x[1].get('date', datetime.min)), reverse=True)
+
+        # Return just the updates (without scores)
+        return [update for score, update in scored_updates]
 
     async def _fetch_uscis_news(self) -> List[Dict]:
         """Fetch latest news from USCIS."""
