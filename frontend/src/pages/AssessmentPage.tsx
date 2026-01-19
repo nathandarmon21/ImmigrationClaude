@@ -95,6 +95,25 @@ export default function AssessmentPage() {
       question: 'How many years of professional experience do you have?',
       type: 'number',
     },
+    {
+      id: 'current_location',
+      question: 'Where are you currently located?',
+      type: 'radio',
+      options: [
+        { value: 'outside_us', label: 'Outside the United States' },
+        { value: 'us_visitor', label: 'In the US (visitor/tourist)' },
+        { value: 'us_student', label: 'In the US (F-1 student)' },
+        { value: 'us_worker', label: 'In the US (work visa)' },
+        { value: 'us_other', label: 'In the US (other status)' },
+      ],
+    },
+    {
+      id: 'immigration_story',
+      question: 'Tell us about your immigration goals and situation',
+      description: 'Please share any relevant details about your background, why you want to come to/stay in the US, any special circumstances, family ties, previous visa applications, timeline constraints, or anything else that would help us give you the best personalized advice.',
+      type: 'textarea',
+      placeholder: 'For example: I completed my Master\'s in Computer Science and have been working at a tech company for 3 years. My company is willing to sponsor me, but I\'m not sure whether to pursue H-1B or explore O-1 options since I have some publications...',
+    },
   ]
 
   const handleAnswer = (questionId: string, value: any) => {
@@ -232,6 +251,24 @@ export default function AssessmentPage() {
                   </div>
                 )
               })}
+            </div>
+          )}
+
+          {currentQuestion.type === 'textarea' && (
+            <div>
+              {currentQuestion.description && (
+                <p className="text-gray-600 mb-4 text-sm">{currentQuestion.description}</p>
+              )}
+              <textarea
+                value={(profile as any)[currentQuestion.id] || ''}
+                onChange={(e) => handleAnswer(currentQuestion.id, e.target.value)}
+                className="w-full min-h-[200px] p-4 border-2 border-gray-200 rounded-lg focus:border-primary-300 focus:outline-none resize-y"
+                placeholder={currentQuestion.placeholder}
+                rows={8}
+              />
+              <p className="text-sm text-gray-500 mt-2">
+                {((profile as any)[currentQuestion.id] || '').length} characters
+              </p>
             </div>
           )}
 

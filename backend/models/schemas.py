@@ -20,6 +20,8 @@ class UserProfile(BaseModel):
     employer_will_sponsor: bool = False
     country_of_citizenship: Optional[str] = None
     currently_in_us: bool = False
+    current_location: Optional[str] = None
+    immigration_story: Optional[str] = None
     additional_info: Dict[str, Any] = {}
 
 

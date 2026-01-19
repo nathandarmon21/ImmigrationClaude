@@ -106,6 +106,8 @@ Current User Profile:
         prompt += f"- Purpose: {user_profile.purpose}\n"
         if user_profile.current_status:
             prompt += f"- Current Status: {user_profile.current_status}\n"
+        if user_profile.current_location:
+            prompt += f"- Current Location: {user_profile.current_location}\n"
         if user_profile.education_level:
             prompt += f"- Education: {user_profile.education_level}\n"
         if user_profile.field_of_expertise:
@@ -118,6 +120,11 @@ Current User Profile:
             prompt += f"- Has Job Offer: Yes\n"
         if user_profile.employer_will_sponsor:
             prompt += f"- Employer Will Sponsor: Yes\n"
+
+        # Add immigration story if provided
+        if user_profile.immigration_story:
+            prompt += f"\n**User's Immigration Story and Context:**\n{user_profile.immigration_story}\n"
+            prompt += "\nIMPORTANT: Use the above personal story to provide highly personalized, context-aware recommendations that specifically address their unique situation, concerns, timeline, and goals. Reference details from their story in your advice.\n"
 
         # Add recommended pathways context
         if recommended_pathways:
