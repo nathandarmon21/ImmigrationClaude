@@ -2,36 +2,110 @@
 Main FastAPI application for Immigration Advisory System.
 """
 
+print("=" * 60)
+print("STARTING IMMIGRATION ADVISORY API")
+print("=" * 60)
+
+import sys
+import os
+import traceback
+
+print(f"Python version: {sys.version}")
+print(f"Working directory: {os.getcwd()}")
+print(f"Python path: {sys.path[:3]}")
+
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import List, Optional, Dict, Any
-import os
+
+print("✓ FastAPI core imports successful")
+
 from dotenv import load_dotenv
-
-from models.schemas import (
-    UserProfile,
-    PathwayRecommendation,
-    AdvisoryRequest,
-    AdvisoryResponse,
-    ConversationMessage,
-)
-from core.analyzer import PathwayAnalyzer
-from services.claude_advisor import ClaudeAdvisor
-from services.data_fetcher import ImmigrationDataFetcher
-from services.web_automation import ImmigrationWebAutomation
-from services.immigration_updates import ImmigrationUpdatesService
-from knowledge.pathways import IMMIGRATION_PATHWAYS, ASSESSMENT_QUESTIONS
-
-# Load environment variables
 load_dotenv()
+print("✓ Environment variables loaded")
+
+# Import with error handling
+IMMIGRATION_PATHWAYS = {}
+ASSESSMENT_QUESTIONS = []
+pathway_analyzer = None
+claude_advisor = None
+data_fetcher = None
+web_automation = None
+immigration_updates = None
+
+try:
+    print("Importing schemas...")
+    from models.schemas import (
+        UserProfile,
+        PathwayRecommendation,
+        AdvisoryRequest,
+        AdvisoryResponse,
+        ConversationMessage,
+    )
+    print("✓ Schemas imported")
+except Exception as e:
+    print(f"✗ Schemas import failed: {e}")
+    traceback.print_exc()
+
+try:
+    print("Importing knowledge base...")
+    from knowledge.pathways import IMMIGRATION_PATHWAYS, ASSESSMENT_QUESTIONS
+    print(f"✓ Knowledge base imported ({len(IMMIGRATION_PATHWAYS)} pathways)")
+except Exception as e:
+    print(f"✗ Knowledge base import failed: {e}")
+    traceback.print_exc()
+
+try:
+    print("Importing PathwayAnalyzer...")
+    from core.analyzer import PathwayAnalyzer
+    print("✓ PathwayAnalyzer imported")
+except Exception as e:
+    print(f"✗ PathwayAnalyzer import failed: {e}")
+    traceback.print_exc()
+    PathwayAnalyzer = None
+
+try:
+    print("Importing services...")
+    from services.claude_advisor import ClaudeAdvisor
+    print("✓ ClaudeAdvisor imported")
+except Exception as e:
+    print(f"✗ ClaudeAdvisor import failed: {e}")
+    traceback.print_exc()
+    ClaudeAdvisor = None
+
+try:
+    from services.data_fetcher import ImmigrationDataFetcher
+    print("✓ ImmigrationDataFetcher imported")
+except Exception as e:
+    print(f"✗ ImmigrationDataFetcher import failed: {e}")
+    traceback.print_exc()
+    ImmigrationDataFetcher = None
+
+try:
+    from services.web_automation import ImmigrationWebAutomation
+    print("✓ ImmigrationWebAutomation imported")
+except Exception as e:
+    print(f"✗ ImmigrationWebAutomation import failed: {e}")
+    traceback.print_exc()
+    ImmigrationWebAutomation = None
+
+try:
+    from services.immigration_updates import ImmigrationUpdatesService
+    print("✓ ImmigrationUpdatesService imported")
+except Exception as e:
+    print(f"✗ ImmigrationUpdatesService import failed: {e}")
+    traceback.print_exc()
+    ImmigrationUpdatesService = None
 
 # Initialize FastAPI app
+print("Initializing FastAPI app...")
 app = FastAPI(
     title="Immigration Advisory API",
     description="Intelligent US immigration advisory system powered by Claude AI",
     version="1.0.0",
 )
+print("✓ FastAPI app created")
 
 # Configure CORS
 cors_origins = os.getenv("CORS_ORIGINS", "*").split(",")
@@ -42,57 +116,72 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+print("✓ CORS middleware configured")
 
 # Initialize services with error handling
-try:
-    pathway_analyzer = PathwayAnalyzer()
-    print("✓ PathwayAnalyzer initialized")
-except Exception as e:
-    print(f"✗ PathwayAnalyzer failed: {e}")
-    pathway_analyzer = None
+if PathwayAnalyzer:
+    try:
+        pathway_analyzer = PathwayAnalyzer()
+        print("✓ PathwayAnalyzer initialized")
+    except Exception as e:
+        print(f"✗ PathwayAnalyzer initialization failed: {e}")
+        traceback.print_exc()
+        pathway_analyzer = None
 
-try:
-    claude_advisor = ClaudeAdvisor()
-    print("✓ ClaudeAdvisor initialized")
-except Exception as e:
-    print(f"✗ ClaudeAdvisor failed: {e}")
-    claude_advisor = None
+if ClaudeAdvisor:
+    try:
+        claude_advisor = ClaudeAdvisor()
+        print("✓ ClaudeAdvisor initialized")
+    except Exception as e:
+        print(f"✗ ClaudeAdvisor initialization failed: {e}")
+        traceback.print_exc()
+        claude_advisor = None
 
-try:
-    data_fetcher = ImmigrationDataFetcher()
-    print("✓ ImmigrationDataFetcher initialized")
-except Exception as e:
-    print(f"✗ ImmigrationDataFetcher failed: {e}")
-    data_fetcher = None
+if ImmigrationDataFetcher:
+    try:
+        data_fetcher = ImmigrationDataFetcher()
+        print("✓ ImmigrationDataFetcher initialized")
+    except Exception as e:
+        print(f"✗ ImmigrationDataFetcher initialization failed: {e}")
+        traceback.print_exc()
+        data_fetcher = None
 
-try:
-    web_automation = ImmigrationWebAutomation()
-    print("✓ ImmigrationWebAutomation initialized")
-except Exception as e:
-    print(f"✗ ImmigrationWebAutomation failed: {e}")
-    web_automation = None
+if ImmigrationWebAutomation:
+    try:
+        web_automation = ImmigrationWebAutomation()
+        print("✓ ImmigrationWebAutomation initialized")
+    except Exception as e:
+        print(f"✗ ImmigrationWebAutomation initialization failed: {e}")
+        traceback.print_exc()
+        web_automation = None
 
-try:
-    immigration_updates = ImmigrationUpdatesService()
-    print("✓ ImmigrationUpdatesService initialized")
-except Exception as e:
-    print(f"✗ ImmigrationUpdatesService failed: {e}")
-    immigration_updates = None
+if ImmigrationUpdatesService:
+    try:
+        immigration_updates = ImmigrationUpdatesService()
+        print("✓ ImmigrationUpdatesService initialized")
+    except Exception as e:
+        print(f"✗ ImmigrationUpdatesService initialization failed: {e}")
+        traceback.print_exc()
+        immigration_updates = None
+
+print("=" * 60)
+print("STARTUP COMPLETE - API READY")
+print("=" * 60)
 
 
 # Request/Response models
 class AnalyzeRequest(BaseModel):
-    profile: UserProfile
+    profile: Dict[str, Any]
 
 
 class CompareRequest(BaseModel):
     pathway_ids: List[str]
-    profile: UserProfile
+    profile: Dict[str, Any]
 
 
 class NextStepsRequest(BaseModel):
     pathway_id: str
-    profile: UserProfile
+    profile: Dict[str, Any]
 
 
 # API Endpoints
@@ -103,7 +192,14 @@ async def root():
     return {
         "message": "Immigration Advisory API",
         "version": "1.0.0",
-        "status": "running"
+        "status": "running",
+        "endpoints": [
+            "/health",
+            "/pathways",
+            "/analyze",
+            "/updates/latest",
+            "/advice",
+        ]
     }
 
 
@@ -170,7 +266,9 @@ async def analyze_profile(request: AnalyzeRequest) -> Dict[str, Any]:
         raise HTTPException(status_code=503, detail="Pathway analyzer service is not available")
 
     try:
-        recommendations = pathway_analyzer.analyze_profile(request.profile)
+        from models.schemas import UserProfile
+        profile = UserProfile(**request.profile)
+        recommendations = pathway_analyzer.analyze_profile(profile)
 
         return {
             "recommendations": [rec.dict() for rec in recommendations],
@@ -178,7 +276,6 @@ async def analyze_profile(request: AnalyzeRequest) -> Dict[str, Any]:
         }
     except Exception as e:
         print(f"Error in analyze_profile: {str(e)}")
-        import traceback
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=f"Analysis failed: {str(e)}")
 
@@ -190,17 +287,26 @@ async def compare_pathways(request: CompareRequest) -> Dict[str, Any]:
 
     Returns detailed comparison and recommendation.
     """
+    if pathway_analyzer is None:
+        raise HTTPException(status_code=503, detail="Pathway analyzer not available")
+
+    if claude_advisor is None:
+        raise HTTPException(status_code=503, detail="Claude advisor not available")
+
     try:
+        from models.schemas import UserProfile
+        profile = UserProfile(**request.profile)
+
         # Get comparison data from analyzer
         comparison_data = pathway_analyzer.compare_pathways(
             request.pathway_ids,
-            request.profile
+            profile
         )
 
         # Get AI-generated comparison narrative
         comparison_narrative = claude_advisor.generate_comparison(
             request.pathway_ids,
-            request.profile
+            profile
         )
 
         return {
@@ -209,33 +315,46 @@ async def compare_pathways(request: CompareRequest) -> Dict[str, Any]:
             "pathways_compared": request.pathway_ids,
         }
     except Exception as e:
+        print(f"Error in compare_pathways: {str(e)}")
+        traceback.print_exc()
         raise HTTPException(status_code=500, detail=f"Comparison failed: {str(e)}")
 
 
 @app.post("/advice")
-async def get_advice(request: AdvisoryRequest) -> AdvisoryResponse:
+async def get_advice(request: Dict[str, Any]) -> Dict[str, Any]:
     """
     Get intelligent immigration advice from Claude AI.
 
     Provides conversational guidance based on user profile and question.
     """
+    if claude_advisor is None:
+        raise HTTPException(status_code=503, detail="Claude advisor not available")
+
+    if pathway_analyzer is None:
+        raise HTTPException(status_code=503, detail="Pathway analyzer not available")
+
     try:
+        from models.schemas import UserProfile
+        profile = UserProfile(**request.get("user_profile", {}))
+
         # Get pathway recommendations for context
-        recommendations = pathway_analyzer.analyze_profile(request.user_profile)
+        recommendations = pathway_analyzer.analyze_profile(profile)
 
         # Get advice from Claude
         response_text = claude_advisor.get_advice(
-            user_profile=request.user_profile,
-            user_message=request.user_message,
-            conversation_history=request.conversation_history,
+            user_profile=profile,
+            user_message=request.get("user_message", ""),
+            conversation_history=request.get("conversation_history", []),
             recommended_pathways=recommendations[:3],  # Top 3
         )
 
-        return AdvisoryResponse(
-            response=response_text,
-            requires_more_info=False,
-        )
+        return {
+            "response": response_text,
+            "requires_more_info": False,
+        }
     except Exception as e:
+        print(f"Error in get_advice: {str(e)}")
+        traceback.print_exc()
         raise HTTPException(status_code=500, detail=f"Advisory failed: {str(e)}")
 
 
@@ -246,10 +365,16 @@ async def get_next_steps(request: NextStepsRequest) -> Dict[str, str]:
 
     Returns actionable step-by-step guidance.
     """
+    if claude_advisor is None:
+        raise HTTPException(status_code=503, detail="Claude advisor not available")
+
     try:
+        from models.schemas import UserProfile
+        profile = UserProfile(**request.profile)
+
         steps = claude_advisor.get_next_steps(
             pathway_id=request.pathway_id,
-            user_profile=request.profile
+            user_profile=profile
         )
 
         return {
@@ -257,12 +382,17 @@ async def get_next_steps(request: NextStepsRequest) -> Dict[str, str]:
             "next_steps": steps,
         }
     except Exception as e:
+        print(f"Error in get_next_steps: {str(e)}")
+        traceback.print_exc()
         raise HTTPException(status_code=500, detail=f"Failed to get next steps: {str(e)}")
 
 
 @app.get("/data/processing-times/{form_type}")
 async def get_processing_times(form_type: str, service_center: Optional[str] = None):
     """Get current USCIS processing times."""
+    if data_fetcher is None:
+        raise HTTPException(status_code=503, detail="Data fetcher not available")
+
     data = await data_fetcher.get_processing_times(form_type, service_center)
     return data
 
@@ -270,6 +400,9 @@ async def get_processing_times(form_type: str, service_center: Optional[str] = N
 @app.get("/data/visa-bulletin")
 async def get_visa_bulletin():
     """Get current State Department Visa Bulletin."""
+    if data_fetcher is None:
+        raise HTTPException(status_code=503, detail="Data fetcher not available")
+
     data = await data_fetcher.get_visa_bulletin()
     return data
 
@@ -277,6 +410,9 @@ async def get_visa_bulletin():
 @app.get("/data/h1b-stats")
 async def get_h1b_stats():
     """Get H-1B lottery statistics."""
+    if data_fetcher is None:
+        raise HTTPException(status_code=503, detail="Data fetcher not available")
+
     data = await data_fetcher.get_h1b_stats()
     return data
 
@@ -284,6 +420,9 @@ async def get_h1b_stats():
 @app.get("/data/filing-fees")
 async def get_filing_fees():
     """Get current USCIS filing fees."""
+    if data_fetcher is None:
+        raise HTTPException(status_code=503, detail="Data fetcher not available")
+
     data = await data_fetcher.get_filing_fees()
     return data
 
@@ -291,6 +430,9 @@ async def get_filing_fees():
 @app.get("/automation/forms/{pathway_id}")
 async def get_required_forms(pathway_id: str):
     """Get required forms for a pathway."""
+    if web_automation is None:
+        raise HTTPException(status_code=503, detail="Web automation not available")
+
     forms = await web_automation.find_immigration_forms(pathway_id)
     return forms
 
@@ -298,9 +440,12 @@ async def get_required_forms(pathway_id: str):
 @app.post("/automation/document-checklist")
 async def get_document_checklist(request: NextStepsRequest):
     """Get personalized document checklist."""
+    if web_automation is None:
+        raise HTTPException(status_code=503, detail="Web automation not available")
+
     checklist = await web_automation.prepare_document_checklist(
         request.pathway_id,
-        request.profile.dict()
+        request.profile
     )
     return checklist
 
@@ -308,6 +453,9 @@ async def get_document_checklist(request: NextStepsRequest):
 @app.get("/automation/find-attorney")
 async def find_attorney(location: str, specialty: str = "immigration"):
     """Get information about finding immigration attorneys."""
+    if web_automation is None:
+        raise HTTPException(status_code=503, detail="Web automation not available")
+
     results = await web_automation.get_attorney_search_results(location, specialty)
     return results
 
@@ -340,7 +488,6 @@ async def get_latest_updates(limit: int = 10):
         }
     except Exception as e:
         print(f"Error in get_latest_updates: {str(e)}")
-        import traceback
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=f"Failed to fetch updates: {str(e)}")
 
@@ -353,6 +500,9 @@ async def get_update_details(source_url: str):
     Args:
         source_url: URL of the update
     """
+    if immigration_updates is None:
+        raise HTTPException(status_code=503, detail="Immigration updates service not available")
+
     try:
         details = await immigration_updates.get_update_details(source_url)
         if not details:
@@ -361,6 +511,8 @@ async def get_update_details(source_url: str):
     except HTTPException:
         raise
     except Exception as e:
+        print(f"Error in get_update_details: {str(e)}")
+        traceback.print_exc()
         raise HTTPException(status_code=500, detail=f"Failed to fetch update details: {str(e)}")
 
 
@@ -373,6 +525,9 @@ async def search_updates(query: str, category: Optional[str] = None):
         query: Search query (e.g., "H-1B", "green card")
         category: Optional category filter (policy_update, visa_bulletin, executive_order)
     """
+    if immigration_updates is None:
+        raise HTTPException(status_code=503, detail="Immigration updates service not available")
+
     try:
         results = await immigration_updates.search_updates(query, category)
         return {
@@ -381,6 +536,8 @@ async def search_updates(query: str, category: Optional[str] = None):
             "query": query
         }
     except Exception as e:
+        print(f"Error in search_updates: {str(e)}")
+        traceback.print_exc()
         raise HTTPException(status_code=500, detail=f"Search failed: {str(e)}")
 
 
