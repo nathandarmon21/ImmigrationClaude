@@ -6,6 +6,7 @@ import ResultsPage from './pages/ResultsPage'
 import ComparePage from './pages/ComparePage'
 import ChatPage from './pages/ChatPage'
 import PathwayDetailPage from './pages/PathwayDetailPage'
+import UpdatesPage from './pages/UpdatesPage'
 import Navigation from './components/Navigation'
 
 const queryClient = new QueryClient()
@@ -23,17 +24,14 @@ function App() {
               <Route path="/results" element={<ResultsPage />} />
               <Route path="/compare" element={<ComparePage />} />
               <Route path="/chat" element={<ChatPage />} />
+              <Route path="/updates" element={<UpdatesPage />} />
               <Route path="/pathway/:pathwayId" element={<PathwayDetailPage />} />
             </Routes>
           </main>
           <footer className="bg-gray-800 text-white py-8 mt-12">
             <div className="container mx-auto px-4 text-center">
               <p className="text-sm text-gray-400">
-                This tool provides informational guidance only and does not constitute legal advice.
-                For specific legal matters, consult with a licensed immigration attorney.
-              </p>
-              <p className="mt-4 text-xs text-gray-500">
-                © 2025 Immigration Advisory System. Powered by Claude AI.
+                This provides informational guidance only. For legal advice specific to your situation, consult a licensed immigration attorney.
               </p>
             </div>
           </footer>

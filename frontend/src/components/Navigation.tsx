@@ -1,5 +1,5 @@
 import { Link, useLocation } from 'react-router-dom'
-import { Home, FileText, GitCompare, MessageSquare } from 'lucide-react'
+import { Home, FileText, GitCompare, MessageSquare, Newspaper } from 'lucide-react'
 
 export default function Navigation() {
   const location = useLocation()
@@ -39,6 +39,18 @@ export default function Navigation() {
             >
               <FileText size={18} />
               <span>Assessment</span>
+            </Link>
+
+            <Link
+              to="/updates"
+              className={`flex items-center space-x-2 px-3 py-2 rounded-lg transition-colors ${
+                isActive('/updates')
+                  ? 'bg-primary-50 text-primary-700'
+                  : 'text-gray-600 hover:bg-gray-100'
+              }`}
+            >
+              <Newspaper size={18} />
+              <span>Updates</span>
             </Link>
 
             <Link
