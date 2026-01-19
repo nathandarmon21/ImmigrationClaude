@@ -43,12 +43,41 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Initialize services
-pathway_analyzer = PathwayAnalyzer()
-claude_advisor = ClaudeAdvisor()
-data_fetcher = ImmigrationDataFetcher()
-web_automation = ImmigrationWebAutomation()
-immigration_updates = ImmigrationUpdatesService()
+# Initialize services with error handling
+try:
+    pathway_analyzer = PathwayAnalyzer()
+    print("✓ PathwayAnalyzer initialized")
+except Exception as e:
+    print(f"✗ PathwayAnalyzer failed: {e}")
+    pathway_analyzer = None
+
+try:
+    claude_advisor = ClaudeAdvisor()
+    print("✓ ClaudeAdvisor initialized")
+except Exception as e:
+    print(f"✗ ClaudeAdvisor failed: {e}")
+    claude_advisor = None
+
+try:
+    data_fetcher = ImmigrationDataFetcher()
+    print("✓ ImmigrationDataFetcher initialized")
+except Exception as e:
+    print(f"✗ ImmigrationDataFetcher failed: {e}")
+    data_fetcher = None
+
+try:
+    web_automation = ImmigrationWebAutomation()
+    print("✓ ImmigrationWebAutomation initialized")
+except Exception as e:
+    print(f"✗ ImmigrationWebAutomation failed: {e}")
+    web_automation = None
+
+try:
+    immigration_updates = ImmigrationUpdatesService()
+    print("✓ ImmigrationUpdatesService initialized")
+except Exception as e:
+    print(f"✗ ImmigrationUpdatesService failed: {e}")
+    immigration_updates = None
 
 
 # Request/Response models
@@ -81,7 +110,17 @@ async def root():
 @app.get("/health")
 async def health_check():
     """Health check endpoint."""
-    return {"status": "healthy"}
+    return {
+        "status": "healthy",
+        "services": {
+            "pathway_analyzer": pathway_analyzer is not None,
+            "claude_advisor": claude_advisor is not None,
+            "data_fetcher": data_fetcher is not None,
+            "web_automation": web_automation is not None,
+            "immigration_updates": immigration_updates is not None,
+        },
+        "pathways_loaded": len(IMMIGRATION_PATHWAYS) if IMMIGRATION_PATHWAYS else 0
+    }
 
 
 @app.get("/pathways")
@@ -127,6 +166,9 @@ async def analyze_profile(request: AnalyzeRequest) -> Dict[str, Any]:
 
     Returns ranked list of pathway recommendations.
     """
+    if pathway_analyzer is None:
+        raise HTTPException(status_code=503, detail="Pathway analyzer service is not available")
+
     try:
         recommendations = pathway_analyzer.analyze_profile(request.profile)
 
@@ -135,6 +177,9 @@ async def analyze_profile(request: AnalyzeRequest) -> Dict[str, Any]:
             "total_pathways": len(recommendations),
         }
     except Exception as e:
+        print(f"Error in analyze_profile: {str(e)}")
+        import traceback
+        traceback.print_exc()
         raise HTTPException(status_code=500, detail=f"Analysis failed: {str(e)}")
 
 
@@ -274,6 +319,9 @@ async def get_latest_updates(limit: int = 10):
 
     Returns recent updates from USCIS, State Department, and Federal Register.
     """
+    if immigration_updates is None:
+        raise HTTPException(status_code=503, detail="Immigration updates service is not available")
+
     try:
         updates = await immigration_updates.get_latest_updates(limit=limit)
 
@@ -291,6 +339,9 @@ async def get_latest_updates(limit: int = 10):
             "last_updated": serialized_updates[0]['date'] if serialized_updates else None
         }
     except Exception as e:
+        print(f"Error in get_latest_updates: {str(e)}")
+        import traceback
+        traceback.print_exc()
         raise HTTPException(status_code=500, detail=f"Failed to fetch updates: {str(e)}")
 
 
