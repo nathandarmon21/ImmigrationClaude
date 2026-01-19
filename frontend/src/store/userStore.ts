@@ -70,6 +70,12 @@ export const useUserStore = create<UserStore>()(
     }),
     {
       name: 'immigration-user-store',
+      // Only persist recommendations and conversation history, not the profile
+      // This ensures the survey always starts fresh
+      partialize: (state) => ({
+        recommendations: state.recommendations,
+        conversationHistory: state.conversationHistory,
+      }),
     }
   )
 )
